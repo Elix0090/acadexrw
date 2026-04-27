@@ -53,6 +53,7 @@ function SchoolsPage() {
     const next = loadDB();
     next.schools = next.schools.filter((s) => s.id !== id);
     next.users = next.users.filter((u) => u.schoolId !== id);
+    next.classes = next.classes.filter((c) => c.schoolId !== id);
     next.students = next.students.filter((s) => s.schoolId !== id);
     next.materials = next.materials.filter((m) => m.schoolId !== id);
     next.tracking = next.tracking.filter((t) => t.schoolId !== id);
