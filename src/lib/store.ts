@@ -89,7 +89,7 @@ const KEY = "acadex_db_v2";
 const SESSION = "acadex_session_v1";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-const today = () => new Date().toISOString();
+
 
 function seed(): DB {
   const users: User[] = [
