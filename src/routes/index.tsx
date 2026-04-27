@@ -131,7 +131,7 @@ function Landing() {
               <li key={x} className="flex items-center gap-2"><Check className="h-4 w-4 text-success" /> {x}</li>
             ))}
           </ul>
-          <Link to="/login"><Button size="lg" className="mt-8 bg-[var(--gradient-primary)] shadow-[var(--shadow-elegant)]">Get Started Free</Button></Link>
+          <Link to="/login"><Button size="lg" variant="gradient" className="mt-8">Get Started Free</Button></Link>
         </div>
       </section>
 
