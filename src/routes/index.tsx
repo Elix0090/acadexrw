@@ -28,7 +28,7 @@ function Landing() {
           </nav>
           <div className="flex items-center gap-2">
             <Link to="/login"><Button variant="ghost" size="sm">Login</Button></Link>
-            <Link to="/login"><Button size="sm" className="bg-[var(--gradient-primary)] shadow-[var(--shadow-elegant)]">Get Started</Button></Link>
+            <Link to="/login"><Button size="sm" variant="gradient">Get Started</Button></Link>
           </div>
         </div>
       </header>
