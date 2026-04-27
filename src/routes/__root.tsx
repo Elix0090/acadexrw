@@ -36,6 +36,10 @@ export const Route = createRootRoute({
       { property: "og:description", content: "Track materials, manage students, and eliminate delays." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Acadex — Smarter School Accountability" },
+      { name: "twitter:description", content: "Track materials, manage students, and eliminate delays." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/7HgeZJ8l4VQoXS6sonF2YcxPNx82/social-images/social-1777291606860-ChatGPT_Image_Apr_27__2026__04_32_40_AM-removebg-preview.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/7HgeZJ8l4VQoXS6sonF2YcxPNx82/social-images/social-1777291606860-ChatGPT_Image_Apr_27__2026__04_32_40_AM-removebg-preview.webp" },
     ],
     links: [
       {
