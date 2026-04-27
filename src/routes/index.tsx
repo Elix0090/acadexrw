@@ -49,10 +49,9 @@ function Landing() {
             Acadex helps schools track materials, manage students, and eliminate delays — all in one beautiful, modern dashboard.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <Link to="/login"><Button size="lg" className="bg-[var(--gradient-primary)] shadow-[var(--shadow-elegant)]">Get Started <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
+            <Link to="/login"><Button size="lg" variant="gradient">Get Started <ArrowRight className="ml-2 h-4 w-4" /></Button></Link>
             <Link to="/login"><Button size="lg" variant="outline">Login</Button></Link>
           </div>
-          <p className="mt-4 text-xs text-muted-foreground">Demo: admin@acadex.com / admin123</p>
 
           {/* Mock dashboard preview */}
           <div className="relative mx-auto mt-16 max-w-5xl rounded-2xl border border-border bg-card p-2 shadow-[var(--shadow-elegant)]">
