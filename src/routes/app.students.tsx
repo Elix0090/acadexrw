@@ -38,6 +38,7 @@ function StudentsPage() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [classId, setClassId] = useState<string>("");
+  const [viewStudent, setViewStudent] = useState<string | null>(null);
 
   function addStudent() {
     if (!name.trim()) return toast.error("Enter the student name");
@@ -69,11 +70,7 @@ function StudentsPage() {
     saveDB(next);
   }
 
-  function updateStatus(studentId: string, materialId: string, status: "completed" | "pending" | "overdue") {
-    const next = loadDB();
-    const t = next.tracking.find((x) => x.studentId === studentId && x.materialId === materialId);
-    if (t) { t.status = status; t.updatedAt = new Date().toISOString(); saveDB(next); }
-  }
+
 
   return (
     <div className="space-y-6">
