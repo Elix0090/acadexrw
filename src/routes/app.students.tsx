@@ -217,7 +217,8 @@ function StudentDetailDialog({ studentId, onClose }: { studentId: string | null;
                       <TableCell><StatusBadge status={tracking?.status ?? "pending"} /></TableCell>
                       <TableCell>{tracking?.promisedDate ? new Date(tracking.promisedDate).toLocaleDateString() : "—"}</TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
