@@ -75,7 +75,7 @@ function TrackingPage() {
     } else {
       t.status = status;
       if (promisedDate !== undefined) t.promisedDate = promisedDate;
-      if (status !== "pending") t.promisedDate = status === "pending" ? t.promisedDate : (status === "completed" ? null : t.promisedDate);
+      if (status === "completed") t.promisedDate = null;
       t.updatedAt = new Date().toISOString();
     }
     saveDB(next);
