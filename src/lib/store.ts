@@ -86,11 +86,20 @@ export type Student = {
 
 export type MaterialKind = "fee" | "logistics" | "academic";
 
+export type MaterialCategory = {
+  id: string;
+  schoolId: string;
+  name: string;          // custom display name e.g. "Uniform", "Tuition", "Books"
+  kind: MaterialKind;    // which staff role checks materials in this category
+  createdAt: string;
+};
+
 export type Material = {
   id: string;
   schoolId: string;
   name: string;
-  kind: MaterialKind;
+  kind: MaterialKind;       // mirrors category.kind for fast filtering
+  categoryId?: string | null;
 };
 
 export type TrackingStatus = "completed" | "pending" | "overdue";
