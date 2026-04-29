@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { useMemo, useState } from "react";
-import { Plus, Trash2, Eye } from "lucide-react";
+import { Plus, Trash2, Eye, Pencil } from "lucide-react";
 import { StatusBadge } from "./app.dashboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ function StudentsPage() {
     .filter((s) => filterClass === "all" || s.classId === filterClass);
 
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [classId, setClassId] = useState<string>("");
   const [parentPhone, setParentPhone] = useState("");
@@ -51,13 +52,47 @@ function StudentsPage() {
     reader.readAsDataURL(file);
   }
 
-  function addStudent() {
+  function resetForm() {
+    setEditingId(null); setName(""); setClassId(""); setParentPhone(""); setPhoto(null);
+  }
+
+  function openCreate() {
+    resetForm(); setOpen(true);
+  }
+
+  function openEdit(id: string) {
+    const s = db.students.find((x) => x.id === id);
+    if (!s) return;
+    setEditingId(id);
+    setName(s.name);
+    setClassId(s.classId);
+    setParentPhone(s.parentPhone || "");
+    setPhoto(s.photo ?? null);
+    setOpen(true);
+  }
+
+  function saveStudent() {
     if (!name.trim()) return toast.error("Enter the student name");
     if (!classId) return toast.error("Select a class");
     if (!parentPhone.trim() || parentPhone.trim().length < 7) return toast.error("Enter a valid parent phone number");
     const next = loadDB();
     const cls = next.classes.find((c) => c.id === classId);
     if (!cls) return toast.error("Class not found");
+
+    if (editingId) {
+      const s = next.students.find((x) => x.id === editingId);
+      if (!s) return;
+      s.name = name.trim();
+      s.classId = classId;
+      s.className = classDisplayName(cls);
+      s.parentPhone = parentPhone.trim();
+      s.photo = photo;
+      saveDB(next);
+      setOpen(false); resetForm();
+      toast.success("Student updated");
+      return;
+    }
+
     const newId = "st_" + uid();
     next.students.push({
       id: newId,
@@ -73,7 +108,7 @@ function StudentsPage() {
       materialId: m.id, status: "pending", promisedDate: null, updatedAt: new Date().toISOString(),
     }));
     saveDB(next);
-    setOpen(false); setName(""); setClassId(""); setParentPhone(""); setPhoto(null);
+    setOpen(false); resetForm();
     toast.success("Student added");
   }
 
@@ -104,47 +139,53 @@ function StudentsPage() {
             </SelectContent>
           </Select>
           {canEdit && (
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild><Button variant="gradient"><Plus className="mr-2 h-4 w-4" /> Add Student</Button></DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Add new student</DialogTitle></DialogHeader>
-                {classes.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">
-                    You need to create a class first. <Link to="/app/classes" className="text-primary underline">Go to Classes</Link>.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-                    <div>
-                      <Label>Class</Label>
-                      <Select value={classId} onValueChange={setClassId}>
-                        <SelectTrigger><SelectValue placeholder="Select class (e.g. S1, L5 CSA)" /></SelectTrigger>
-                        <SelectContent>
-                          {classes.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>{classDisplayName(c)}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Parent phone</Label>
-                      <Input type="tel" placeholder="e.g. +250 7XX XXX XXX" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label>Photo (optional)</Label>
-                      <Input type="file" accept="image/*" onChange={onPhotoChange} />
-                      {photo && (
-                        <img src={photo} alt="Student preview" className="mt-2 h-20 w-20 rounded-full object-cover border border-border" />
-                      )}
-                    </div>
-                  </div>
-                )}
-                <DialogFooter><Button onClick={addStudent} variant="gradient" disabled={classes.length === 0}>Save</Button></DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <Button variant="gradient" onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Add Student</Button>
           )}
         </div>
       </div>
+
+      {canEdit && (
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>{editingId ? "Edit student" : "Add new student"}</DialogTitle></DialogHeader>
+            {classes.length === 0 ? (
+              <div className="text-sm text-muted-foreground">
+                You need to create a class first. <Link to="/app/classes" className="text-primary underline">Go to Classes</Link>.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+                <div>
+                  <Label>Class</Label>
+                  <Select value={classId} onValueChange={setClassId}>
+                    <SelectTrigger><SelectValue placeholder="Select class (e.g. S1, L5 CSA)" /></SelectTrigger>
+                    <SelectContent>
+                      {classes.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{classDisplayName(c)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Parent phone</Label>
+                  <Input type="tel" placeholder="e.g. +250 7XX XXX XXX" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Photo (optional)</Label>
+                  <Input type="file" accept="image/*" onChange={onPhotoChange} />
+                  {photo && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <img src={photo} alt="Student preview" className="h-20 w-20 rounded-full object-cover border border-border" />
+                      <Button type="button" size="sm" variant="outline" onClick={() => setPhoto(null)}>Remove photo</Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            <DialogFooter><Button onClick={saveStudent} variant="gradient" disabled={classes.length === 0}>{editingId ? "Save changes" : "Save"}</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader><CardTitle className="text-base">All students ({students.length})</CardTitle></CardHeader>
@@ -192,9 +233,14 @@ function StudentsPage() {
                           <Eye className="mr-1 h-3.5 w-3.5" /> View
                         </Button>
                         {canEdit && (
-                          <Button size="icon" variant="ghost" onClick={() => removeStudent(s.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <>
+                            <Button size="icon" variant="ghost" onClick={() => openEdit(s.id)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" onClick={() => removeStudent(s.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </>
                         )}
                       </div>
                     </TableCell>
@@ -257,12 +303,16 @@ function StudentDetailDialog({ studentId, onClose }: { studentId: string | null;
                     <TableRow><TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-6">No materials defined.</TableCell></TableRow>
                   )}
                   {rows.map(({ material, tracking }) => {
-                    const staff = db.users.find((u) => u.id === material.assignedStaffId);
-                    const role = staff ? db.staffRoles.find((r) => r.id === staff.staffRoleId) : null;
+                    const staffNames = material.assignedStaffIds.map((sid) => {
+                      const u = db.users.find((x) => x.id === sid);
+                      if (!u) return null;
+                      const r = db.staffRoles.find((rr) => rr.id === u.staffRoleId);
+                      return r ? `${u.name} (${r.name})` : u.name;
+                    }).filter(Boolean) as string[];
                     return (
                     <TableRow key={material.id}>
                       <TableCell className="font-medium">{material.name}</TableCell>
-                      <TableCell>{staff ? `${staff.name}${role ? ` (${role.name})` : ""}` : "—"}</TableCell>
+                      <TableCell>{staffNames.length ? staffNames.join(", ") : "—"}</TableCell>
                       <TableCell><StatusBadge status={tracking?.status ?? "pending"} /></TableCell>
                       <TableCell>{tracking?.promisedDate ? new Date(tracking.promisedDate).toLocaleDateString() : "—"}</TableCell>
                     </TableRow>
