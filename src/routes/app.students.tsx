@@ -139,47 +139,53 @@ function StudentsPage() {
             </SelectContent>
           </Select>
           {canEdit && (
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild><Button variant="gradient"><Plus className="mr-2 h-4 w-4" /> Add Student</Button></DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Add new student</DialogTitle></DialogHeader>
-                {classes.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">
-                    You need to create a class first. <Link to="/app/classes" className="text-primary underline">Go to Classes</Link>.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-                    <div>
-                      <Label>Class</Label>
-                      <Select value={classId} onValueChange={setClassId}>
-                        <SelectTrigger><SelectValue placeholder="Select class (e.g. S1, L5 CSA)" /></SelectTrigger>
-                        <SelectContent>
-                          {classes.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>{classDisplayName(c)}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Parent phone</Label>
-                      <Input type="tel" placeholder="e.g. +250 7XX XXX XXX" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label>Photo (optional)</Label>
-                      <Input type="file" accept="image/*" onChange={onPhotoChange} />
-                      {photo && (
-                        <img src={photo} alt="Student preview" className="mt-2 h-20 w-20 rounded-full object-cover border border-border" />
-                      )}
-                    </div>
-                  </div>
-                )}
-                <DialogFooter><Button onClick={addStudent} variant="gradient" disabled={classes.length === 0}>Save</Button></DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <Button variant="gradient" onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Add Student</Button>
           )}
         </div>
       </div>
+
+      {canEdit && (
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>{editingId ? "Edit student" : "Add new student"}</DialogTitle></DialogHeader>
+            {classes.length === 0 ? (
+              <div className="text-sm text-muted-foreground">
+                You need to create a class first. <Link to="/app/classes" className="text-primary underline">Go to Classes</Link>.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+                <div>
+                  <Label>Class</Label>
+                  <Select value={classId} onValueChange={setClassId}>
+                    <SelectTrigger><SelectValue placeholder="Select class (e.g. S1, L5 CSA)" /></SelectTrigger>
+                    <SelectContent>
+                      {classes.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{classDisplayName(c)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Parent phone</Label>
+                  <Input type="tel" placeholder="e.g. +250 7XX XXX XXX" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} />
+                </div>
+                <div>
+                  <Label>Photo (optional)</Label>
+                  <Input type="file" accept="image/*" onChange={onPhotoChange} />
+                  {photo && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <img src={photo} alt="Student preview" className="h-20 w-20 rounded-full object-cover border border-border" />
+                      <Button type="button" size="sm" variant="outline" onClick={() => setPhoto(null)}>Remove photo</Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            <DialogFooter><Button onClick={saveStudent} variant="gradient" disabled={classes.length === 0}>{editingId ? "Save changes" : "Save"}</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <Card className="shadow-[var(--shadow-card)]">
         <CardHeader><CardTitle className="text-base">All students ({students.length})</CardTitle></CardHeader>
