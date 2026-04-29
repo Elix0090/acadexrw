@@ -35,6 +35,7 @@ export type User = {
   role: Role;
   schoolId: string | null;     // null for super admin
   staffRoleId?: string | null; // ref to StaffRole, only when role === "staff"
+  photo?: string | null;       // optional data URL
 };
 
 export type School = {
@@ -84,7 +85,8 @@ export type Material = {
   id: string;
   schoolId: string;
   name: string;
-  assignedStaffId: string; // which staff user is responsible for checking this material
+  // One or more staff users responsible for checking this material.
+  assignedStaffIds: string[];
 };
 
 export type TrackingStatus = "completed" | "pending" | "overdue";
