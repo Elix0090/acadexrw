@@ -229,8 +229,18 @@ function StudentDetailDialog({ studentId, onClose }: { studentId: string | null;
         </DialogHeader>
         {student && (
           <div className="space-y-3">
-            <div className="text-sm text-muted-foreground">
-              Class: <span className="font-medium text-foreground">{cls ? classDisplayName(cls) : (student.className || "—")}</span>
+            <div className="flex items-center gap-3">
+              {student.photo ? (
+                <img src={student.photo} alt={student.name} className="h-16 w-16 rounded-full object-cover border border-border" />
+              ) : (
+                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center text-lg text-muted-foreground">
+                  {student.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="text-sm space-y-1">
+                <div className="text-muted-foreground">Class: <span className="font-medium text-foreground">{cls ? classDisplayName(cls) : (student.className || "—")}</span></div>
+                <div className="text-muted-foreground">Parent phone: <span className="font-medium text-foreground">{student.parentPhone || "—"}</span></div>
+              </div>
             </div>
             <div className="rounded-lg border border-border">
               <Table>
