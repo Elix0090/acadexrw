@@ -126,6 +126,17 @@ function StudentsPage() {
                         </SelectContent>
                       </Select>
                     </div>
+                    <div>
+                      <Label>Parent phone</Label>
+                      <Input type="tel" placeholder="e.g. +250 7XX XXX XXX" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label>Photo (optional)</Label>
+                      <Input type="file" accept="image/*" onChange={onPhotoChange} />
+                      {photo && (
+                        <img src={photo} alt="Student preview" className="mt-2 h-20 w-20 rounded-full object-cover border border-border" />
+                      )}
+                    </div>
                   </div>
                 )}
                 <DialogFooter><Button onClick={addStudent} variant="gradient" disabled={classes.length === 0}>Save</Button></DialogFooter>
