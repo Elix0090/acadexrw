@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { useMemo, useState } from "react";
-import { Plus, Trash2, Eye } from "lucide-react";
+import { Plus, Trash2, Eye, Pencil } from "lucide-react";
 import { StatusBadge } from "./app.dashboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ function StudentsPage() {
     .filter((s) => filterClass === "all" || s.classId === filterClass);
 
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [classId, setClassId] = useState<string>("");
   const [parentPhone, setParentPhone] = useState("");
@@ -51,13 +52,47 @@ function StudentsPage() {
     reader.readAsDataURL(file);
   }
 
-  function addStudent() {
+  function resetForm() {
+    setEditingId(null); setName(""); setClassId(""); setParentPhone(""); setPhoto(null);
+  }
+
+  function openCreate() {
+    resetForm(); setOpen(true);
+  }
+
+  function openEdit(id: string) {
+    const s = db.students.find((x) => x.id === id);
+    if (!s) return;
+    setEditingId(id);
+    setName(s.name);
+    setClassId(s.classId);
+    setParentPhone(s.parentPhone || "");
+    setPhoto(s.photo ?? null);
+    setOpen(true);
+  }
+
+  function saveStudent() {
     if (!name.trim()) return toast.error("Enter the student name");
     if (!classId) return toast.error("Select a class");
     if (!parentPhone.trim() || parentPhone.trim().length < 7) return toast.error("Enter a valid parent phone number");
     const next = loadDB();
     const cls = next.classes.find((c) => c.id === classId);
     if (!cls) return toast.error("Class not found");
+
+    if (editingId) {
+      const s = next.students.find((x) => x.id === editingId);
+      if (!s) return;
+      s.name = name.trim();
+      s.classId = classId;
+      s.className = classDisplayName(cls);
+      s.parentPhone = parentPhone.trim();
+      s.photo = photo;
+      saveDB(next);
+      setOpen(false); resetForm();
+      toast.success("Student updated");
+      return;
+    }
+
     const newId = "st_" + uid();
     next.students.push({
       id: newId,
@@ -73,7 +108,7 @@ function StudentsPage() {
       materialId: m.id, status: "pending", promisedDate: null, updatedAt: new Date().toISOString(),
     }));
     saveDB(next);
-    setOpen(false); setName(""); setClassId(""); setParentPhone(""); setPhoto(null);
+    setOpen(false); resetForm();
     toast.success("Student added");
   }
 
