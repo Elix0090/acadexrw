@@ -257,12 +257,16 @@ function StudentDetailDialog({ studentId, onClose }: { studentId: string | null;
                     <TableRow><TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-6">No materials defined.</TableCell></TableRow>
                   )}
                   {rows.map(({ material, tracking }) => {
-                    const staff = db.users.find((u) => u.id === material.assignedStaffId);
-                    const role = staff ? db.staffRoles.find((r) => r.id === staff.staffRoleId) : null;
+                    const staffNames = material.assignedStaffIds.map((sid) => {
+                      const u = db.users.find((x) => x.id === sid);
+                      if (!u) return null;
+                      const r = db.staffRoles.find((rr) => rr.id === u.staffRoleId);
+                      return r ? `${u.name} (${r.name})` : u.name;
+                    }).filter(Boolean) as string[];
                     return (
                     <TableRow key={material.id}>
                       <TableCell className="font-medium">{material.name}</TableCell>
-                      <TableCell>{staff ? `${staff.name}${role ? ` (${role.name})` : ""}` : "—"}</TableCell>
+                      <TableCell>{staffNames.length ? staffNames.join(", ") : "—"}</TableCell>
                       <TableCell><StatusBadge status={tracking?.status ?? "pending"} /></TableCell>
                       <TableCell>{tracking?.promisedDate ? new Date(tracking.promisedDate).toLocaleDateString() : "—"}</TableCell>
                     </TableRow>
