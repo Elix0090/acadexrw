@@ -169,7 +169,21 @@ function StudentsPage() {
                 const total = studentTracking.length;
                 return (
                   <TableRow key={s.id}>
-                    <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {s.photo ? (
+                          <img src={s.photo} alt={s.name} className="h-8 w-8 rounded-full object-cover border border-border" />
+                        ) : (
+                          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                            {s.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <div>{s.name}</div>
+                          {s.parentPhone && <div className="text-xs text-muted-foreground">{s.parentPhone}</div>}
+                        </div>
+                      </div>
+                    </TableCell>
                     <TableCell>{cls ? classDisplayName(cls) : (s.className || "—")}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{done} / {total} completed</TableCell>
                     <TableCell className="text-right">
