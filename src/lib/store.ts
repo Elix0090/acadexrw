@@ -76,6 +76,8 @@ export type Student = {
   name: string;
   classId: string;
   className?: string;
+  parentPhone: string;
+  photo?: string | null; // data URL
 };
 
 export type Material = {
