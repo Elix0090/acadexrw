@@ -38,11 +38,23 @@ function StudentsPage() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [classId, setClassId] = useState<string>("");
+  const [parentPhone, setParentPhone] = useState("");
+  const [photo, setPhoto] = useState<string | null>(null);
   const [viewStudent, setViewStudent] = useState<string | null>(null);
+
+  function onPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { toast.error("Photo must be under 2MB"); return; }
+    const reader = new FileReader();
+    reader.onload = () => setPhoto(typeof reader.result === "string" ? reader.result : null);
+    reader.readAsDataURL(file);
+  }
 
   function addStudent() {
     if (!name.trim()) return toast.error("Enter the student name");
     if (!classId) return toast.error("Select a class");
+    if (!parentPhone.trim() || parentPhone.trim().length < 7) return toast.error("Enter a valid parent phone number");
     const next = loadDB();
     const cls = next.classes.find((c) => c.id === classId);
     if (!cls) return toast.error("Class not found");
@@ -53,13 +65,15 @@ function StudentsPage() {
       name: name.trim(),
       classId,
       className: classDisplayName(cls),
+      parentPhone: parentPhone.trim(),
+      photo: photo,
     });
     materials.filter((m) => m.schoolId === cls.schoolId).forEach((m) => next.tracking.push({
       id: "tr_" + uid(), schoolId: cls.schoolId, studentId: newId,
       materialId: m.id, status: "pending", promisedDate: null, updatedAt: new Date().toISOString(),
     }));
     saveDB(next);
-    setOpen(false); setName(""); setClassId("");
+    setOpen(false); setName(""); setClassId(""); setParentPhone(""); setPhoto(null);
     toast.success("Student added");
   }
 
