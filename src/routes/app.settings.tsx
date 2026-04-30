@@ -263,7 +263,7 @@ function SettingsPage() {
             </div>
           )}
           <DialogFooter>
-            <Button onClick={saveStaff} variant="gradient" disabled={availableRoles.length === 0 && user.role !== "super_admin"}>{editingId ? "Save changes" : "Add"}</Button>
+            <Button onClick={saveStaff} variant="gradient" disabled={availableRoles.length === 0 && user.role === "staff"}>{editingId ? "Save changes" : "Add"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
