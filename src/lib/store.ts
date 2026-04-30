@@ -127,7 +127,7 @@ type DB = {
   tracking: Tracking[];
 };
 
-const KEY = "acadex_db_v6";
+const KEY = "acadex_db_v7";
 const SESSION = "acadex_session_v1";
 
 const uid = () => Math.random().toString(36).slice(2, 10);

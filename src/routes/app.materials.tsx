@@ -86,6 +86,8 @@ function MaterialsPage() {
         status: "pending",
         promisedDate: null,
         updatedAt: new Date().toISOString(),
+        academicYear: currentAcademicYear(),
+        term: currentTerm(),
       });
     });
     saveDB(next);

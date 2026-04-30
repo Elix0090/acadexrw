@@ -106,6 +106,7 @@ function StudentsPage() {
     materials.filter((m) => m.schoolId === cls.schoolId).forEach((m) => next.tracking.push({
       id: "tr_" + uid(), schoolId: cls.schoolId, studentId: newId,
       materialId: m.id, status: "pending", promisedDate: null, updatedAt: new Date().toISOString(),
+      academicYear: currentAcademicYear(), term: currentTerm(),
     }));
     saveDB(next);
     setOpen(false); resetForm();
