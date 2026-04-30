@@ -211,7 +211,7 @@ function TrackingPage() {
               )}
               {students.map((s) => {
                 const cls = db.classes.find((c) => c.id === s.classId);
-                const t = activeMaterial ? db.tracking.find((x) => x.studentId === s.id && x.materialId === activeMaterial.id) : undefined;
+                const t = activeMaterial ? findEntry(s.id, activeMaterial.id) : undefined;
                 const status: TrackingStatus = t?.status ?? "pending";
                 return (
                   <TableRow key={s.id}>
