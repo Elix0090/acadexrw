@@ -12,6 +12,8 @@ import {
   GraduationCap,
   ArrowUpRight,
   TrendingUp,
+  Trophy,
+  Award,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -135,6 +137,41 @@ function Dashboard() {
     })
     .sort((a, b) => b.completed + b.pending + b.overdue - (a.completed + a.pending + a.overdue))
     .slice(0, 6);
+
+  // Top class by brought-rate (min 1 tracked item to be eligible)
+  const classRanking = scope.classes
+    .map((c) => {
+      const studentIds = scope.students.filter((s) => s.classId === c.id).map((s) => s.id);
+      const items = scope.tracking.filter((t) => studentIds.includes(t.studentId));
+      const done = items.filter((t) => t.status === "completed").length;
+      const cName =
+        c.level.startsWith("L") && c.abbreviation
+          ? `${c.level} ${c.abbreviation}`
+          : c.level.startsWith("L") && c.trade
+            ? `${c.level} ${c.trade}`
+            : c.level;
+      return { name: cName, total: items.length, completed: done, rate: items.length ? Math.round((done / items.length) * 100) : 0 };
+    })
+    .filter((c) => c.total > 0)
+    .sort((a, b) => b.rate - a.rate || b.completed - a.completed);
+  const topClass = classRanking[0];
+
+  // Top trade by brought-rate (aggregate all classes sharing a trade)
+  const tradeMap = new Map<string, { total: number; completed: number }>();
+  for (const c of scope.classes) {
+    const trade = c.trade?.trim();
+    if (!trade) continue;
+    const studentIds = scope.students.filter((s) => s.classId === c.id).map((s) => s.id);
+    const items = scope.tracking.filter((t) => studentIds.includes(t.studentId));
+    const done = items.filter((t) => t.status === "completed").length;
+    const prev = tradeMap.get(trade) ?? { total: 0, completed: 0 };
+    tradeMap.set(trade, { total: prev.total + items.length, completed: prev.completed + done });
+  }
+  const tradeRanking = Array.from(tradeMap.entries())
+    .map(([name, v]) => ({ name, total: v.total, completed: v.completed, rate: v.total ? Math.round((v.completed / v.total) * 100) : 0 }))
+    .filter((t) => t.total > 0)
+    .sort((a, b) => b.rate - a.rate || b.completed - a.completed);
+  const topTrade = tradeRanking[0];
 
   const recent = [...scope.tracking]
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
