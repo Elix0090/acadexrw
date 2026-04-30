@@ -243,7 +243,7 @@ function SettingsPage() {
                 <Select value={roleSelection} onValueChange={setRoleSelection}>
                   <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
                   <SelectContent>
-                    {user.role === "super_admin" && <SelectItem value={SCHOOL_ADMIN_OPTION}>School Admin</SelectItem>}
+                    {(user.role === "super_admin" || user.role === "school_admin") && <SelectItem value={SCHOOL_ADMIN_OPTION}>School Admin</SelectItem>}
                     {availableRoles.map((r) => (
                       <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
                     ))}
