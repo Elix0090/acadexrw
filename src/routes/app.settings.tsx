@@ -225,7 +225,7 @@ function SettingsPage() {
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editingId ? "Edit staff member" : "Add staff member"}</DialogTitle></DialogHeader>
-          {availableRoles.length === 0 && user.role !== "super_admin" ? (
+          {availableRoles.length === 0 && user.role === "staff" ? (
             <div className="text-sm text-muted-foreground">
               No staff roles defined yet. <Link to="/app/categories" className="text-primary underline">Create a role</Link> first (e.g. Finance, Logistics) so you can assign one.
             </div>
