@@ -12,8 +12,14 @@ import {
   GraduationCap,
   ArrowUpRight,
   TrendingUp,
+  TrendingDown,
   Trophy,
   Award,
+  Bell,
+  Calendar,
+  ThumbsUp,
+  FileBarChart,
+  ClipboardCheck,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -28,6 +34,9 @@ import {
   Cell,
   BarChart,
   Bar,
+  RadialBarChart,
+  RadialBar,
+  PolarAngleAxis,
 } from "recharts";
 
 export const Route = createFileRoute("/app/dashboard")({
@@ -57,41 +66,6 @@ function Dashboard() {
   const total = scope.tracking.length;
   const completionRate = total ? Math.round((completed / total) * 100) : 0;
 
-  const stats = [
-    {
-      label: "Students",
-      value: scope.students.length,
-      icon: Users,
-      tone: "text-primary",
-      bg: "bg-primary/10",
-      hint: `${scope.classes.length} classes`,
-    },
-    {
-      label: "Materials",
-      value: scope.materials.length,
-      icon: Package,
-      tone: "text-primary-deep",
-      bg: "bg-accent",
-      hint: `${total} tracked items`,
-    },
-    {
-      label: "Completion",
-      value: `${completionRate}%`,
-      icon: TrendingUp,
-      tone: "text-success",
-      bg: "bg-success/10",
-      hint: `${completed} completed`,
-    },
-    {
-      label: "Needs attention",
-      value: pending + overdue,
-      icon: AlertTriangle,
-      tone: "text-destructive",
-      bg: "bg-destructive/10",
-      hint: `${overdue} overdue`,
-    },
-  ];
-
   // Activity over last 7 days
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
@@ -110,6 +84,7 @@ function Dashboard() {
       day: d.toLocaleDateString(undefined, { weekday: "short" }),
       completed: dayItems.filter((t) => t.status === "completed").length,
       pending: dayItems.filter((t) => t.status === "pending").length,
+      total: dayItems.length,
     };
   });
 
@@ -119,15 +94,12 @@ function Dashboard() {
     { name: "Overdue", value: overdue, color: "var(--destructive)" },
   ].filter((d) => d.value > 0);
 
-  // Per-class breakdown (top 6)
   const classBreakdown = scope.classes
     .map((c) => {
       const studentIds = scope.students.filter((s) => s.classId === c.id).map((s) => s.id);
       const items = scope.tracking.filter((t) => studentIds.includes(t.studentId));
       const cName =
-        c.level.startsWith("L") && c.abbreviation
-          ? `${c.level} ${c.abbreviation}`
-          : c.level;
+        c.level.startsWith("L") && c.abbreviation ? `${c.level} ${c.abbreviation}` : c.level;
       return {
         name: cName,
         completed: items.filter((t) => t.status === "completed").length,
@@ -135,10 +107,12 @@ function Dashboard() {
         overdue: items.filter((t) => t.status === "overdue").length,
       };
     })
-    .sort((a, b) => b.completed + b.pending + b.overdue - (a.completed + a.pending + a.overdue))
+    .sort(
+      (a, b) =>
+        b.completed + b.pending + b.overdue - (a.completed + a.pending + a.overdue),
+    )
     .slice(0, 6);
 
-  // Top class by brought-rate (min 1 tracked item to be eligible)
   const classRanking = scope.classes
     .map((c) => {
       const studentIds = scope.students.filter((s) => s.classId === c.id).map((s) => s.id);
@@ -150,13 +124,17 @@ function Dashboard() {
           : c.level.startsWith("L") && c.trade
             ? `${c.level} ${c.trade}`
             : c.level;
-      return { name: cName, total: items.length, completed: done, rate: items.length ? Math.round((done / items.length) * 100) : 0 };
+      return {
+        name: cName,
+        total: items.length,
+        completed: done,
+        rate: items.length ? Math.round((done / items.length) * 100) : 0,
+      };
     })
     .filter((c) => c.total > 0)
     .sort((a, b) => b.rate - a.rate || b.completed - a.completed);
   const topClass = classRanking[0];
 
-  // Top trade by brought-rate (aggregate all classes sharing a trade)
   const tradeMap = new Map<string, { total: number; completed: number }>();
   for (const c of scope.classes) {
     const trade = c.trade?.trim();
@@ -168,7 +146,12 @@ function Dashboard() {
     tradeMap.set(trade, { total: prev.total + items.length, completed: prev.completed + done });
   }
   const tradeRanking = Array.from(tradeMap.entries())
-    .map(([name, v]) => ({ name, total: v.total, completed: v.completed, rate: v.total ? Math.round((v.completed / v.total) * 100) : 0 }))
+    .map(([name, v]) => ({
+      name,
+      total: v.total,
+      completed: v.completed,
+      rate: v.total ? Math.round((v.completed / v.total) * 100) : 0,
+    }))
     .filter((t) => t.total > 0)
     .sort((a, b) => b.rate - a.rate || b.completed - a.completed);
   const topTrade = tradeRanking[0];
@@ -179,49 +162,124 @@ function Dashboard() {
 
   const isEmpty = scope.students.length === 0 && scope.materials.length === 0;
 
+  // Risk gauge (lower completion = higher risk, scaled to 20)
+  const riskScore = Math.max(1, Math.round(((100 - completionRate) / 100) * 20));
+  const riskLabel = riskScore <= 7 ? "Low" : riskScore <= 14 ? "Balanced" : "High";
+  const riskTone =
+    riskScore <= 7 ? "text-success" : riskScore <= 14 ? "text-primary" : "text-destructive";
+  const riskColor =
+    riskScore <= 7 ? "var(--success)" : riskScore <= 14 ? "var(--primary)" : "var(--destructive)";
+
+  // Mini stat sparkline data (reuse trend)
+  const visitsSpark = trend.map((t) => ({ v: t.total }));
+  const bounceSpark = trend.map((t) => ({ v: t.pending }));
+  const productsSpark = trend.map((t) => ({ v: t.completed }));
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Welcome back, {user.name.split(" ")[0]}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {user.role === "super_admin"
-              ? `Overview across ${db.schools.length} school${db.schools.length === 1 ? "" : "s"}.`
-              : `Here's the latest from ${scope.schools[0]?.name ?? "your school"}.`}
-          </p>
+      {/* Hero header */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-hero p-6 text-primary-foreground shadow-[var(--shadow-elegant)] sm:p-8">
+        <div className="absolute -right-16 -top-16 h-60 w-60 rounded-full bg-primary-foreground/10 blur-3xl" />
+        <div className="absolute -bottom-20 -left-10 h-52 w-52 rounded-full bg-primary-foreground/5 blur-3xl" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-foreground/15 text-lg font-semibold backdrop-blur">
+              {user.name.split(" ").map((s) => s[0]).slice(0, 2).join("")}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                {greeting()} {user.name.split(" ")[0]}!
+              </h1>
+              <p className="text-sm text-primary-foreground/80">
+                {user.role === "super_admin"
+                  ? `Overview across ${db.schools.length} school${db.schools.length === 1 ? "" : "s"}.`
+                  : `Welcome back to ${scope.schools[0]?.name ?? "your school"}.`}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className="border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground"
+            >
+              <Calendar className="mr-1.5 h-3 w-3" />
+              {new Date().toLocaleDateString(undefined, {
+                weekday: "long",
+                month: "short",
+                day: "numeric",
+              })}
+            </Badge>
+            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground backdrop-blur transition hover:bg-primary-foreground/20">
+              <Bell className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-        <Badge variant="outline" className="w-fit border-primary/30 bg-primary/5 text-primary">
-          {new Date().toLocaleDateString(undefined, {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-          })}
-        </Badge>
       </div>
 
-      {/* Stat cards */}
+      {/* Big stat cards (with mini area charts) */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <BigStatCard
+          label="Tracked Items"
+          value={total}
+          subtitle="Total tracking entries across the period."
+          data={trend}
+          dataKey="completed"
+          color="var(--primary)"
+          breakdown={[
+            { label: "Open", value: pending },
+            { label: "Running", value: pending },
+            { label: "Solved", value: completed },
+          ]}
+        />
+        <BigStatCard
+          label="Materials Tracked"
+          value={scope.materials.length}
+          subtitle="Total materials being tracked across classes."
+          data={trend}
+          dataKey="total"
+          color="var(--success)"
+          breakdown={[
+            { label: "Open", value: pending },
+            { label: "Running", value: pending + overdue },
+            { label: "Solved", value: completed },
+          ]}
+        />
+      </div>
+
+      {/* Colored stat tiles */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((s) => (
-          <Card key={s.label} className="border-border shadow-[var(--shadow-card)]">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {s.label}
-                  </div>
-                  <div className={`mt-2 text-3xl font-bold ${s.tone}`}>{s.value}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">{s.hint}</div>
-                </div>
-                <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${s.bg}`}>
-                  <s.icon className={`h-5 w-5 ${s.tone}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <StatTile
+          label="Students"
+          value={scope.students.length}
+          delta="% change"
+          trendUp
+          icon={Users}
+          tone="warning"
+        />
+        <StatTile
+          label="Classes"
+          value={scope.classes.length}
+          delta="% change"
+          trendUp
+          icon={GraduationCap}
+          tone="success"
+        />
+        <StatTile
+          label="Pending"
+          value={pending + overdue}
+          delta="% change"
+          trendUp={false}
+          icon={Clock}
+          tone="destructive"
+        />
+        <StatTile
+          label="Completed"
+          value={completed}
+          delta="% change"
+          trendUp={false}
+          icon={CheckCircle2}
+          tone="primary"
+        />
       </div>
 
       {isEmpty ? (
@@ -251,89 +309,147 @@ function Dashboard() {
         </Card>
       ) : (
         <>
-          {/* Top performers */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="shadow-[var(--shadow-card)] border-success/30">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Trophy className="h-4 w-4 text-success" /> Top class
-                  </CardTitle>
-                  <CardDescription>Highest "brought" rate</CardDescription>
-                </div>
-                {topClass && (
-                  <Badge className="bg-success/15 text-success border-success/30" variant="outline">
-                    {topClass.rate}%
-                  </Badge>
-                )}
+          {/* Recent tracking + Latest updates */}
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Card className="lg:col-span-2 shadow-[var(--shadow-card)]">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-base">Recent Tracking</CardTitle>
+                <Button asChild variant="ghost" size="sm" className="text-xs">
+                  <Link to="/app/tracking">
+                    View all <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
+                  </Link>
+                </Button>
               </CardHeader>
-              <CardContent>
-                {!topClass ? (
-                  <div className="py-6 text-center text-sm text-muted-foreground">No class data yet.</div>
+              <CardContent className="pt-0">
+                {recent.length === 0 ? (
+                  <div className="py-10 text-center text-sm text-muted-foreground">
+                    No activity yet.
+                  </div>
                 ) : (
-                  <>
-                    <div className="text-2xl font-bold text-foreground">{topClass.name}</div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {topClass.completed} of {topClass.total} items brought
-                    </div>
-                    <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
-                      <div className="h-full bg-success transition-all" style={{ width: `${topClass.rate}%` }} />
-                    </div>
-                    {classRanking.length > 1 && (
-                      <ul className="mt-4 space-y-1.5 text-sm">
-                        {classRanking.slice(1, 4).map((c, i) => (
-                          <li key={c.name} className="flex items-center justify-between text-muted-foreground">
-                            <span>{i + 2}. {c.name}</span>
-                            <span className="font-medium text-foreground">{c.rate}%</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                          <th className="pb-2 text-left font-medium">Student</th>
+                          <th className="pb-2 text-left font-medium">Material</th>
+                          <th className="pb-2 text-left font-medium">Date</th>
+                          <th className="pb-2 text-left font-medium">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {recent.map((t) => {
+                          const stu = db.students.find((s) => s.id === t.studentId);
+                          const mat = db.materials.find((m) => m.id === t.materialId);
+                          return (
+                            <tr key={t.id}>
+                              <td className="py-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                                    {(stu?.name ?? "?")
+                                      .split(" ")
+                                      .map((s) => s[0])
+                                      .slice(0, 2)
+                                      .join("")}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="truncate font-medium text-foreground">
+                                      {stu?.name ?? "Unknown"}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 text-foreground">{mat?.name ?? "—"}</td>
+                              <td className="py-3 text-muted-foreground">
+                                {t.promisedDate
+                                  ? new Date(t.promisedDate).toLocaleDateString(undefined, {
+                                      month: "short",
+                                      day: "numeric",
+                                    })
+                                  : "—"}
+                              </td>
+                              <td className="py-3">
+                                <StatusBadge status={t.status} />
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </CardContent>
             </Card>
 
-            <Card className="shadow-[var(--shadow-card)] border-primary/30">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Award className="h-4 w-4 text-primary" /> Top trade
-                  </CardTitle>
-                  <CardDescription>Aggregated across L-classes</CardDescription>
-                </div>
-                {topTrade && (
-                  <Badge className="bg-primary/15 text-primary border-primary/30" variant="outline">
-                    {topTrade.rate}%
-                  </Badge>
-                )}
+            <Card className="shadow-[var(--shadow-card)]">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Latest Updates</CardTitle>
               </CardHeader>
               <CardContent>
-                {!topTrade ? (
-                  <div className="py-6 text-center text-sm text-muted-foreground">No trade data yet.</div>
-                ) : (
-                  <>
-                    <div className="text-2xl font-bold text-foreground">{topTrade.name}</div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {topTrade.completed} of {topTrade.total} items brought
-                    </div>
-                    <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
-                      <div className="h-full bg-primary transition-all" style={{ width: `${topTrade.rate}%` }} />
-                    </div>
-                    {tradeRanking.length > 1 && (
-                      <ul className="mt-4 space-y-1.5 text-sm">
-                        {tradeRanking.slice(1, 4).map((t, i) => (
-                          <li key={t.name} className="flex items-center justify-between text-muted-foreground">
-                            <span>{i + 2}. {t.name}</span>
-                            <span className="font-medium text-foreground">{t.rate}%</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </>
-                )}
+                <ul className="space-y-5">
+                  <UpdateItem
+                    when="2 hrs ago"
+                    icon={<Users className="h-4 w-4" />}
+                    bg="bg-primary"
+                    title={`+ ${scope.students.length} students tracked`}
+                    desc="Roster is up to date — keep it going!"
+                  />
+                  <UpdateItem
+                    when="4 hrs ago"
+                    icon={<Package className="h-4 w-4" />}
+                    bg="bg-warning"
+                    title={`+ ${scope.materials.length} materials added`}
+                    desc="Materials list refreshed across classes."
+                  />
+                  <UpdateItem
+                    when="1 day ago"
+                    icon={<CheckCircle2 className="h-4 w-4" />}
+                    bg="bg-success"
+                    title={`${completed} items completed`}
+                    desc="Great progress this week, keep it up!"
+                  />
+                  <UpdateItem
+                    when="2 days ago"
+                    icon={<AlertTriangle className="h-4 w-4" />}
+                    bg="bg-destructive"
+                    title={`${overdue} items overdue`}
+                    desc="Attention needed on a few entries."
+                  />
+                </ul>
+                <div className="mt-4 text-right">
+                  <Link
+                    to="/app/tracking"
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
+                    View all updates
+                  </Link>
+                </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Mini stat row */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <MiniStat
+              label="Visits"
+              value={total}
+              data={visitsSpark}
+              color="var(--primary)"
+              up
+            />
+            <MiniStat
+              label="Completion Rate"
+              value={`${completionRate}%`}
+              data={productsSpark}
+              color="var(--success)"
+              up
+            />
+            <MiniStat
+              label="Pending"
+              value={pending}
+              data={bounceSpark}
+              color="var(--warning)"
+              up={false}
+            />
           </div>
 
           {/* Charts row */}
@@ -469,7 +585,7 @@ function Dashboard() {
             </Card>
           </div>
 
-          {/* Class breakdown + Recent activity */}
+          {/* Per-class + Top performers + Risk gauge */}
           <div className="grid gap-6 lg:grid-cols-3">
             <Card className="lg:col-span-2 shadow-[var(--shadow-card)]">
               <CardHeader className="pb-2">
@@ -489,7 +605,11 @@ function Dashboard() {
                         margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
                         barCategoryGap={20}
                       >
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="var(--border)"
+                          vertical={false}
+                        />
                         <XAxis
                           dataKey="name"
                           stroke="var(--muted-foreground)"
@@ -514,9 +634,14 @@ function Dashboard() {
                             color: "var(--popover-foreground)",
                           }}
                         />
-                        <Bar dataKey="completed" stackId="a" fill="var(--success)" radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="completed" stackId="a" fill="var(--success)" />
                         <Bar dataKey="pending" stackId="a" fill="var(--warning)" />
-                        <Bar dataKey="overdue" stackId="a" fill="var(--destructive)" radius={[6, 6, 0, 0]} />
+                        <Bar
+                          dataKey="overdue"
+                          stackId="a"
+                          fill="var(--destructive)"
+                          radius={[6, 6, 0, 0]}
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -525,52 +650,275 @@ function Dashboard() {
             </Card>
 
             <Card className="shadow-[var(--shadow-card)]">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div>
-                  <CardTitle className="text-base">Recent activity</CardTitle>
-                  <CardDescription>Latest tracking updates</CardDescription>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base text-center">Project Risk</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center">
+                <div className="relative h-[200px] w-[200px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadialBarChart
+                      innerRadius="75%"
+                      outerRadius="100%"
+                      data={[{ name: "risk", value: riskScore, fill: riskColor }]}
+                      startAngle={220}
+                      endAngle={-40}
+                    >
+                      <PolarAngleAxis
+                        type="number"
+                        domain={[0, 20]}
+                        angleAxisId={0}
+                        tick={false}
+                      />
+                      <RadialBar
+                        background={{ fill: "var(--muted)" }}
+                        dataKey="value"
+                        cornerRadius={20}
+                      />
+                    </RadialBarChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className={`text-4xl font-bold ${riskTone}`}>{riskScore}</div>
+                  </div>
                 </div>
-                <Button asChild variant="ghost" size="sm" className="text-xs">
-                  <Link to="/app/tracking">
-                    View all <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
+                <div className={`text-sm font-semibold ${riskTone}`}>{riskLabel}</div>
+                <Link
+                  to="/app/tracking"
+                  className="mt-1 text-xs text-muted-foreground hover:text-primary"
+                >
+                  Manage tracking →
+                </Link>
+                <div className="mt-5 grid w-full grid-cols-2 gap-3 border-t border-border pt-4 text-center">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Top class</div>
+                    <div className="truncate text-sm font-semibold text-foreground">
+                      {topClass?.name ?? "—"}
+                    </div>
+                    <div className="text-xs text-success">{topClass?.rate ?? 0}%</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Top trade</div>
+                    <div className="truncate text-sm font-semibold text-foreground">
+                      {topTrade?.name ?? "—"}
+                    </div>
+                    <div className="text-xs text-primary">{topTrade?.rate ?? 0}%</div>
+                  </div>
+                </div>
+                <Button asChild className="mt-5 w-full">
+                  <Link to="/app/reports">
+                    <FileBarChart className="mr-2 h-4 w-4" /> Download Report
                   </Link>
                 </Button>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {recent.length === 0 ? (
-                  <div className="py-10 text-center text-sm text-muted-foreground">
-                    No activity yet.
-                  </div>
-                ) : (
-                  <ul className="divide-y divide-border">
-                    {recent.map((t) => {
-                      const stu = db.students.find((s) => s.id === t.studentId);
-                      const mat = db.materials.find((m) => m.id === t.materialId);
-                      return (
-                        <li key={t.id} className="flex items-center justify-between gap-3 py-3">
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-medium text-foreground">
-                              {stu?.name ?? "Unknown"}
-                            </div>
-                            <div className="truncate text-xs text-muted-foreground">
-                              {mat?.name ?? "Material"}
-                              {t.promisedDate
-                                ? ` • ${new Date(t.promisedDate).toLocaleDateString()}`
-                                : ""}
-                            </div>
-                          </div>
-                          <StatusBadge status={t.status} />
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
               </CardContent>
             </Card>
           </div>
         </>
       )}
     </div>
+  );
+}
+
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good Morning,";
+  if (h < 18) return "Good Afternoon,";
+  return "Good Evening,";
+}
+
+function BigStatCard({
+  label,
+  value,
+  subtitle,
+  data,
+  dataKey,
+  color,
+  breakdown,
+}: {
+  label: string;
+  value: number | string;
+  subtitle: string;
+  data: any[];
+  dataKey: string;
+  color: string;
+  breakdown: { label: string; value: number }[];
+}) {
+  const id = `bg-${label.replace(/\s+/g, "")}`;
+  return (
+    <Card className="overflow-hidden shadow-[var(--shadow-card)]">
+      <CardContent className="p-0">
+        <div className="p-5">
+          <div className="text-3xl font-bold" style={{ color }}>
+            {value}+
+          </div>
+          <div className="mt-1 text-sm font-semibold text-foreground">{label}</div>
+          <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
+        </div>
+        <div className="h-[100px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={color} stopOpacity={0.45} />
+                  <stop offset="100%" stopColor={color} stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <Area
+                type="monotone"
+                dataKey={dataKey}
+                stroke={color}
+                strokeWidth={2}
+                fill={`url(#${id})`}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+        <div
+          className="grid grid-cols-3 divide-x divide-primary-foreground/20 text-primary-foreground"
+          style={{ background: color }}
+        >
+          {breakdown.map((b) => (
+            <div key={b.label} className="px-3 py-3 text-center">
+              <div className="text-2xl font-bold">{b.value}</div>
+              <div className="text-xs opacity-90">{b.label}</div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function StatTile({
+  label,
+  value,
+  delta,
+  trendUp,
+  icon: Icon,
+  tone,
+}: {
+  label: string;
+  value: number | string;
+  delta: string;
+  trendUp: boolean;
+  icon: React.ComponentType<{ className?: string }>;
+  tone: "primary" | "success" | "warning" | "destructive";
+}) {
+  const toneMap = {
+    primary: { text: "text-primary", bg: "bg-primary/10", chip: "bg-primary/15 text-primary" },
+    success: { text: "text-success", bg: "bg-success/10", chip: "bg-success/15 text-success" },
+    warning: { text: "text-warning", bg: "bg-warning/10", chip: "bg-warning/15 text-warning" },
+    destructive: {
+      text: "text-destructive",
+      bg: "bg-destructive/10",
+      chip: "bg-destructive/15 text-destructive",
+    },
+  } as const;
+  const t = toneMap[tone];
+  return (
+    <Card className="shadow-[var(--shadow-card)]">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between">
+          <div className={`text-3xl font-bold ${t.text}`}>{value}</div>
+          <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${t.bg}`}>
+            <Icon className={`h-5 w-5 ${t.text}`} />
+          </div>
+        </div>
+        <div className="mt-1 text-sm font-medium text-foreground">{label}</div>
+        <div
+          className={`mt-3 flex items-center justify-between rounded-lg px-3 py-1.5 text-xs font-medium ${t.chip}`}
+        >
+          <span>{delta}</span>
+          {trendUp ? (
+            <TrendingUp className="h-3.5 w-3.5" />
+          ) : (
+            <TrendingDown className="h-3.5 w-3.5" />
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MiniStat({
+  label,
+  value,
+  data,
+  color,
+  up,
+}: {
+  label: string;
+  value: number | string;
+  data: { v: number }[];
+  color: string;
+  up: boolean;
+}) {
+  const id = `ms-${label.replace(/\s+/g, "")}`;
+  return (
+    <Card className="shadow-[var(--shadow-card)]">
+      <CardContent className="flex items-center justify-between p-5">
+        <div>
+          <div className="text-2xl font-bold text-foreground">{value}</div>
+          <div className="mt-1 flex items-center gap-1 text-xs font-medium text-muted-foreground">
+            {label}
+            {up ? (
+              <TrendingUp className="h-3 w-3 text-success" />
+            ) : (
+              <TrendingDown className="h-3 w-3 text-destructive" />
+            )}
+          </div>
+        </div>
+        <div className="h-[50px] w-[120px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={color} stopOpacity={0.45} />
+                  <stop offset="100%" stopColor={color} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <Area
+                type="monotone"
+                dataKey="v"
+                stroke={color}
+                strokeWidth={2}
+                fill={`url(#${id})`}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function UpdateItem({
+  when,
+  icon,
+  bg,
+  title,
+  desc,
+}: {
+  when: string;
+  icon: React.ReactNode;
+  bg: string;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <li className="flex gap-3">
+      <div className="flex flex-col items-center">
+        <div
+          className={`flex h-8 w-8 items-center justify-center rounded-full text-primary-foreground ${bg}`}
+        >
+          {icon}
+        </div>
+        <div className="mt-1 w-px flex-1 bg-border" />
+      </div>
+      <div className="flex-1 pb-1">
+        <div className="text-xs text-muted-foreground">{when}</div>
+        <div className="mt-0.5 text-sm font-semibold text-foreground">{title}</div>
+        <div className="text-xs text-muted-foreground">{desc}</div>
+      </div>
+    </li>
   );
 }
 
@@ -594,7 +942,7 @@ export function StatusBadge({ status }: { status: "completed" | "pending" | "ove
   } as const;
   const { label, cls, icon } = map[status];
   return (
-    <Badge variant="outline" className={`${cls} flex items-center`}>
+    <Badge variant="outline" className={`${cls} flex items-center w-fit`}>
       {icon}
       {label}
     </Badge>
