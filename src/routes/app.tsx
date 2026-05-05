@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useSession } from "@/hooks/use-acadex";
 import { setSession, hasPermission, userRoleLabel } from "@/lib/store";
 import { useDB } from "@/hooks/use-acadex";
-import { LayoutDashboard, Users, Package, FileBarChart, Settings, Building2, LogOut, Menu, X, GraduationCap, ClipboardCheck, Tag } from "lucide-react";
+import { LayoutDashboard, Users, Package, FileBarChart, Settings, Building2, LogOut, Menu, X, GraduationCap, ClipboardCheck, Tag, UserCog } from "lucide-react";
 import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 
