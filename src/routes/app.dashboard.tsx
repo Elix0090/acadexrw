@@ -505,6 +505,23 @@ function Panel({
   );
 }
 
+export function StatusBadge({ status }: { status: "completed" | "pending" | "overdue" }) {
+  const cfg =
+    status === "completed"
+      ? { label: "Completed", cls: "border-success/30 bg-success/10 text-success" }
+      : status === "overdue"
+        ? { label: "Overdue", cls: "border-destructive/30 bg-destructive/10 text-destructive" }
+        : { label: "Pending", cls: "border-warning/30 bg-warning/10 text-warning" };
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${cfg.cls}`}
+    >
+      <span className="size-1 rounded-full bg-current" />
+      {cfg.label}
+    </span>
+  );
+}
+
 function LegendDot({
   color,
   label,
