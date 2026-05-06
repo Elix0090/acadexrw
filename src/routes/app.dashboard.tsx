@@ -362,7 +362,7 @@ function Dashboard() {
                         />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">
-                            {s?.firstName} {s?.lastName}
+                            {s?.name ?? "Student"}
                           </p>
                           <p className="truncate text-xs text-muted-foreground">
                             {m?.name ?? "Material"}
