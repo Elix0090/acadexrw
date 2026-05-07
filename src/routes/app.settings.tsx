@@ -5,9 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
-import { RotateCcw, KeyRound } from "lucide-react";
+import { RotateCcw, KeyRound, Globe, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
+import { useLang, type Lang } from "@/lib/i18n";
+import { useTheme } from "@/hooks/use-theme";
 
 export const Route = createFileRoute("/app/settings")({
   head: () => ({ meta: [{ title: "Settings — Acadex" }] }),
@@ -17,6 +20,8 @@ export const Route = createFileRoute("/app/settings")({
 function SettingsPage() {
   const db = useDB();
   const user = useSession()!;
+  const { lang, setLang, t } = useLang();
+  const { theme, setTheme } = useTheme();
 
   const [curPwd, setCurPwd] = useState("");
   const [newPwd, setNewPwd] = useState("");
