@@ -42,6 +42,7 @@ function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const { t } = useLang();
 
   if (!user) return null;
 
@@ -67,7 +68,7 @@ function AppShell() {
             return (
               <Link key={item.to} to={item.to} preload="intent" onClick={() => setOpen(false)}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${active ? "bg-primary text-primary-foreground shadow-[var(--shadow-elegant)]" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}>
-                <item.icon className="h-4 w-4" /> {item.label}
+                <item.icon className="h-4 w-4" /> {t(item.key as any)}
               </Link>
             );
           })}
@@ -77,7 +78,7 @@ function AppShell() {
             <div className="text-sm font-semibold text-foreground">{user.name}</div>
             <div className="text-xs text-muted-foreground">{userRoleLabel(user, db)}</div>
             <Button variant="outline" size="sm" className="mt-3 w-full" onClick={logout}>
-              <LogOut className="mr-2 h-3 w-3" /> Sign out
+              <LogOut className="mr-2 h-3 w-3" /> {t("signout")}
             </Button>
           </div>
         </div>
@@ -88,6 +89,7 @@ function AppShell() {
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur">
           <button className="lg:hidden" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></button>
           <div className="ml-auto flex items-center gap-3 text-sm text-muted-foreground">
+            <LangToggle />
             <ThemeToggle />
             <span className="hidden sm:inline">{userRoleLabel(user, db)}</span>
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
