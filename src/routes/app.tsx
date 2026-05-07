@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { useSession } from "@/hooks/use-acadex";
 import { setSession, hasPermission, userRoleLabel } from "@/lib/store";
 import { useDB } from "@/hooks/use-acadex";
-import { LayoutDashboard, Users, Package, FileBarChart, Settings, Building2, LogOut, Menu, X, GraduationCap, ClipboardCheck, Tag, UserCog, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, Users, Package, FileBarChart, Settings, Building2, LogOut, Menu, X, GraduationCap, ClipboardCheck, Tag, UserCog, Sun, Moon, Upload, Archive, History, Globe } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
+import { useLang, type Lang } from "@/lib/i18n";
 import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -20,16 +21,19 @@ export const Route = createFileRoute("/app")({
 });
 
 const NAV = [
-  { to: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard, perm: null as null | string },
-  { to: "/app/schools", label: "Schools", icon: Building2, perm: "manage_schools" },
-  { to: "/app/students", label: "Students", icon: Users, perm: "manage_students" },
-  { to: "/app/classes", label: "Classes", icon: GraduationCap, perm: "manage_classes" },
-  { to: "/app/categories", label: "Staff Roles", icon: Tag, perm: "manage_roles" },
-  { to: "/app/staff", label: "Staff", icon: UserCog, perm: "manage_staff" },
-  { to: "/app/materials", label: "Materials", icon: Package, perm: "manage_materials" },
-  { to: "/app/tracking", label: "Tracking", icon: ClipboardCheck, perm: null },
-  { to: "/app/reports", label: "Reports", icon: FileBarChart, perm: "view_reports" },
-  { to: "/app/settings", label: "Settings", icon: Settings, perm: null },
+  { to: "/app/dashboard", label: "Dashboard", key: "dashboard", icon: LayoutDashboard, perm: null as null | string },
+  { to: "/app/schools", label: "Schools", key: "schools", icon: Building2, perm: "manage_schools" },
+  { to: "/app/students", label: "Students", key: "students", icon: Users, perm: "manage_students" },
+  { to: "/app/classes", label: "Classes", key: "classes", icon: GraduationCap, perm: "manage_classes" },
+  { to: "/app/categories", label: "Staff Roles", key: "staff_roles", icon: Tag, perm: "manage_roles" },
+  { to: "/app/staff", label: "Staff", key: "staff", icon: UserCog, perm: "manage_staff" },
+  { to: "/app/materials", label: "Materials", key: "materials", icon: Package, perm: "manage_materials" },
+  { to: "/app/tracking", label: "Tracking", key: "tracking", icon: ClipboardCheck, perm: null },
+  { to: "/app/reports", label: "Reports", key: "reports", icon: FileBarChart, perm: "view_reports" },
+  { to: "/app/import", label: "Bulk import", key: "bulk_import", icon: Upload, perm: "manage_students" },
+  { to: "/app/archives", label: "Archives", key: "archives", icon: Archive, perm: "view_reports" },
+  { to: "/app/audit", label: "Audit log", key: "audit_log", icon: History, perm: "manage_staff" },
+  { to: "/app/settings", label: "Settings", key: "settings", icon: Settings, perm: null },
 ] as const;
 
 function AppShell() {
