@@ -221,7 +221,7 @@ function StudentsPage() {
                           </div>
                         )}
                         <div>
-                          <div>{s.name}</div>
+                          <Link to="/app/students/$studentId" params={{ studentId: s.id }} className="hover:text-primary hover:underline">{s.name}</Link>
                           {s.parentPhone && <div className="text-xs text-muted-foreground">{s.parentPhone}</div>}
                         </div>
                       </div>
@@ -230,9 +230,11 @@ function StudentsPage() {
                     <TableCell className="text-sm text-muted-foreground">{done} / {total} completed</TableCell>
                     <TableCell className="text-right">
                       <div className="inline-flex gap-1">
-                        <Button size="sm" variant="outline" onClick={() => setViewStudent(s.id)}>
-                          <Eye className="mr-1 h-3.5 w-3.5" /> View
-                        </Button>
+                        <Link to="/app/students/$studentId" params={{ studentId: s.id }}>
+                          <Button size="sm" variant="outline">
+                            <Eye className="mr-1 h-3.5 w-3.5" /> View
+                          </Button>
+                        </Link>
                         {canEdit && (
                           <>
                             <Button size="icon" variant="ghost" onClick={() => openEdit(s.id)}>
