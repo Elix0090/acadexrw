@@ -36,21 +36,22 @@ function StudentProfilePage() {
     overdue: tracking.filter((t) => t.status === "overdue").length,
   };
 
+  const stu = student;
   function exportPDF() {
     const rows = tracking.map((tr) => {
       const m = db.materials.find((x) => x.id === tr.materialId);
       return `<tr><td>${escapeHTML(m?.name ?? "—")}</td><td>${tr.academicYear} · ${TERM_LABEL[tr.term]}</td><td>${statusBadgeHTML(tr.status)}</td><td>${tr.promisedDate ? new Date(tr.promisedDate).toLocaleDateString() : "—"}</td><td>${new Date(tr.updatedAt).toLocaleDateString()}</td></tr>`;
     }).join("");
     const html = `
-      <h1>${escapeHTML(student.name)}</h1>
-      <div class="meta">${escapeHTML(cls ? classDisplayName(cls) : student.className ?? "")} · Parent: ${escapeHTML(student.parentPhone ?? "—")}</div>
+      <h1>${escapeHTML(stu.name)}</h1>
+      <div class="meta">${escapeHTML(cls ? classDisplayName(cls) : stu.className ?? "")} · Parent: ${escapeHTML(stu.parentPhone ?? "—")}</div>
       <div class="summary">
         <div><span>Brought</span><b>${totals.completed}</b></div>
         <div><span>Pending</span><b>${totals.pending}</b></div>
         <div><span>Overdue</span><b>${totals.overdue}</b></div>
       </div>
       <table><thead><tr><th>Material</th><th>Period</th><th>Status</th><th>Promised</th><th>Updated</th></tr></thead><tbody>${rows}</tbody></table>`;
-    exportHTMLToPDF(`Profile — ${student.name}`, html);
+    exportHTMLToPDF(`Profile — ${stu.name}`, html);
   }
 
   return (
