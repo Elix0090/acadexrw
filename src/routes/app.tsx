@@ -111,3 +111,18 @@ function ThemeToggle() {
     </button>
   );
 }
+
+function LangToggle() {
+  const { lang, setLang } = useLang();
+  const cycle: Record<Lang, Lang> = { en: "fr", fr: "rw", rw: "en" };
+  return (
+    <button
+      onClick={() => setLang(cycle[lang])}
+      aria-label="Change language"
+      title="Language"
+      className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-card px-2 text-xs font-medium text-foreground hover:bg-accent transition"
+    >
+      <Globe className="h-3.5 w-3.5" />{lang.toUpperCase()}
+    </button>
+  );
+}
