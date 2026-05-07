@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useSession } from "@/hooks/use-acadex";
 import { setSession, hasPermission, userRoleLabel } from "@/lib/store";
 import { useDB } from "@/hooks/use-acadex";
-import { LayoutDashboard, Users, Package, FileBarChart, Settings, Building2, LogOut, Menu, X, GraduationCap, ClipboardCheck, Tag, UserCog } from "lucide-react";
+import { LayoutDashboard, Users, Package, FileBarChart, Settings, Building2, LogOut, Menu, X, GraduationCap, ClipboardCheck, Tag, UserCog, Sun, Moon } from "lucide-react";
+import { useTheme } from "@/hooks/use-theme";
 import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -83,6 +84,7 @@ function AppShell() {
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur">
           <button className="lg:hidden" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></button>
           <div className="ml-auto flex items-center gap-3 text-sm text-muted-foreground">
+            <ThemeToggle />
             <span className="hidden sm:inline">{userRoleLabel(user, db)}</span>
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
               {user.name.split(" ").map(s=>s[0]).slice(0,2).join("")}
@@ -92,5 +94,14 @@ function AppShell() {
         <main className="p-6"><Outlet /></main>
       </div>
     </div>
+  );
+}
+
+function ThemeToggle() {
+  const { theme, toggle } = useTheme();
+  return (
+    <button onClick={toggle} aria-label="Toggle theme" className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card text-foreground hover:bg-accent transition">
+      {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+    </button>
   );
 }
