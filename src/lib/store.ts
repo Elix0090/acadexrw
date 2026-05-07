@@ -117,6 +117,30 @@ export function currentTerm(d: Date = new Date()): Term {
   return "T3";
 }
 
+export type AuditEntry = {
+  id: string;
+  schoolId: string | null;
+  actorId: string;
+  actorName: string;
+  action: string;
+  target?: string;
+  details?: string;
+  at: string;
+};
+
+export type TermArchive = {
+  id: string;
+  schoolId: string;
+  academicYear: number;
+  term: Term;
+  archivedAt: string;
+  archivedBy: string;
+  tracking: Tracking[];
+  studentsCount: number;
+  materialsCount: number;
+  summary: { completed: number; pending: number; overdue: number };
+};
+
 type DB = {
   users: User[];
   schools: School[];
@@ -125,9 +149,11 @@ type DB = {
   students: Student[];
   materials: Material[];
   tracking: Tracking[];
+  audit: AuditEntry[];
+  archives: TermArchive[];
 };
 
-const KEY = "acadex_db_v7";
+const KEY = "acadex_db_v8";
 const SESSION = "acadex_session_v1";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -136,12 +162,22 @@ function seed(): DB {
   const users: User[] = [
     { id: "u_super", email: "admin@acadex.com", username: "admin", password: "admin123", name: "Super Admin", role: "super_admin", schoolId: null },
   ];
-  return { users, schools: [], staffRoles: [], classes: [], students: [], materials: [], tracking: [] };
+  return { users, schools: [], staffRoles: [], classes: [], students: [], materials: [], tracking: [], audit: [], archives: [] };
 }
 
 export function loadDB(): DB {
   if (typeof window === "undefined") return seed();
   try {
+    // migrate from older keys
+    const oldRaw = localStorage.getItem("acadex_db_v7");
+    if (oldRaw && !localStorage.getItem(KEY)) {
+      try {
+        const parsed = JSON.parse(oldRaw);
+        parsed.audit = parsed.audit ?? [];
+        parsed.archives = parsed.archives ?? [];
+        localStorage.setItem(KEY, JSON.stringify(parsed));
+      } catch {}
+    }
     const raw = localStorage.getItem(KEY);
     if (!raw) {
       const s = seed();
@@ -151,6 +187,8 @@ export function loadDB(): DB {
     const parsed = JSON.parse(raw) as DB;
     if (!parsed.classes) parsed.classes = [];
     if (!parsed.staffRoles) parsed.staffRoles = [];
+    if (!parsed.audit) parsed.audit = [];
+    if (!parsed.archives) parsed.archives = [];
     return parsed;
   } catch {
     const s = seed();
