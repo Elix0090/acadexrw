@@ -65,20 +65,36 @@ function LoginPage() {
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <div className="lg:hidden mb-8"><Link to="/"><Logo /></Link></div>
-          <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Sign in to your Acadex account.</p>
+          <h1 className="text-2xl font-bold text-foreground">{mode === "login" ? "Welcome back" : "Create your account"}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{mode === "login" ? "Sign in to your Acadex account." : "Sign up to get started with Acadex."}</p>
           <form onSubmit={onSubmit} className="mt-8 space-y-4">
+            {mode === "signup" && (
+              <div className="space-y-2">
+                <Label htmlFor="name">Full name</Label>
+                <Input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+              </div>
+            )}
             <div className="space-y-2">
-              <Label htmlFor="identifier">Email or username</Label>
-              <Input id="identifier" type="text" value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder="you@example.com or username" required />
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
             </div>
             <Button type="submit" disabled={loading} variant="gradient" className="w-full">
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Please wait..." : mode === "login" ? "Sign in" : "Sign up"}
             </Button>
+            <Button type="button" variant="outline" className="w-full" disabled={loading} onClick={onGoogle}>
+              Continue with Google
+            </Button>
+            <p className="text-center text-xs text-muted-foreground">
+              {mode === "login" ? (
+                <>No account? <button type="button" className="text-primary hover:underline" onClick={() => setMode("signup")}>Sign up</button></>
+              ) : (
+                <>Already have an account? <button type="button" className="text-primary hover:underline" onClick={() => setMode("login")}>Sign in</button></>
+              )}
+            </p>
           </form>
         </div>
       </div>
