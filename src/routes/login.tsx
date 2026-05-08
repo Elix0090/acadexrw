@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { login } from "@/lib/store";
 import { Check, X } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Login — Acadex" }, { name: "description", content: "Sign in to your Acadex workspace." }] }),
@@ -38,7 +39,8 @@ function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
+    <div className="relative grid min-h-screen lg:grid-cols-2">
+      <div className="absolute right-4 top-4 z-20"><ThemeToggle /></div>
       <div className="relative hidden overflow-hidden lg:block" style={{ background: "var(--gradient-hero)" }}>
         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 20%, white 1px, transparent 1px), radial-gradient(circle at 80% 60%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
         <div className="relative flex h-full flex-col justify-between p-12 text-primary-foreground">
