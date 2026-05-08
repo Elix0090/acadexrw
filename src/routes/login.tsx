@@ -4,7 +4,7 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { login } from "@/lib/store";
+import { loginWithPassword, signUpWithPassword, signInWithGoogle } from "@/lib/store";
 import { Check, X } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -17,25 +17,35 @@ type Popup = { kind: "success" | "error"; title: string; message: string } | nul
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [identifier, setIdentifier] = useState("");
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [popup, setPopup] = useState<Popup>(null);
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setPopup(null);
-    setTimeout(() => {
-      const u = login(identifier, password);
+    setLoading(true); setPopup(null);
+    if (mode === "signup") {
+      const r = await signUpWithPassword(email, password, name || email.split("@")[0]);
       setLoading(false);
-      if (!u) {
-        setPopup({ kind: "error", title: "Login failed", message: "Invalid email/username or password." });
-        return;
-      }
-      setPopup({ kind: "success", title: "Welcome back!", message: `Signed in as ${u.name}` });
-      setTimeout(() => navigate({ to: "/app/dashboard" }), 900);
-    }, 300);
+      if (!r.ok) return setPopup({ kind: "error", title: "Sign up failed", message: r.error || "Try again." });
+      setPopup({ kind: "success", title: "Check your email", message: "Confirm your address to finish signing up." });
+      return;
+    }
+    const r = await loginWithPassword(email, password);
+    setLoading(false);
+    if (!r.ok || !r.user) return setPopup({ kind: "error", title: "Login failed", message: r.error || "Invalid email or password." });
+    setPopup({ kind: "success", title: "Welcome back!", message: `Signed in as ${r.user.name}` });
+    setTimeout(() => navigate({ to: "/app/dashboard" }), 700);
+  }
+
+  async function onGoogle() {
+    setLoading(true);
+    const r = await signInWithGoogle();
+    setLoading(false);
+    if (!r.ok) setPopup({ kind: "error", title: "Google sign-in failed", message: r.error || "Try again." });
   }
 
   return (
